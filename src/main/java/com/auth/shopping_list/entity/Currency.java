@@ -3,18 +3,17 @@ package com.auth.shopping_list.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 
 import java.math.BigDecimal;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "products")
+@Table(name = "currency")
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class Product {
+public class Currency {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

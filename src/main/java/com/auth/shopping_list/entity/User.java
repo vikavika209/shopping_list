@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -33,5 +31,5 @@ public class User {
     @Column(name = "role", nullable = false)
     private Set<Role> roles = new HashSet<>(Set.of(Role.ROLE_USER));
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Product> products = new HashSet<>();
+    private Set<Currency> products = new HashSet<>();
 }
