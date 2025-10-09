@@ -1,9 +1,8 @@
 package com.auth.shopping_list.service;
 
-import com.auth.shopping_list.config.ModelMapperConfig; // если у тебя есть отдельный конфиг
-import com.auth.shopping_list.dto.ProductDTO;
-import com.auth.shopping_list.entity.Product;
-import com.auth.shopping_list.repository.ProductRepository;
+import com.auth.shopping_list.dto.CurrencyDTO;
+import com.auth.shopping_list.entity.Currency;
+import com.auth.shopping_list.repository.CurrencyRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,18 +25,18 @@ import static org.assertj.core.api.Assertions.*;
         "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
         "spring.datasource.driverClassName=org.h2.Driver"
 })
-public class ProductServiceTransactionTest {
+public class CurrencyServiceTransactionTest {
     @Autowired
-    ProductService productService;
+    CurrencyService currencyService;
 
     @Autowired
-    ProductRepository productRepository;
+    CurrencyRepository currencyRepository;
 
     @Autowired
     TxProbe txProbe;
 
-    private static ProductDTO dto(String name, BigDecimal price, BigDecimal qty, String desc) {
-        ProductDTO d = new ProductDTO();
+    private static CurrencyDTO dto(String name, BigDecimal price, BigDecimal qty, String desc) {
+        CurrencyDTO d = new CurrencyDTO();
         d.setName(name);
         d.setPrice(price);
         d.setQty(qty);
@@ -48,37 +47,37 @@ public class ProductServiceTransactionTest {
     @TestConfiguration
     class TestBeans {
         @Bean
-        TxProbe txProbe(ProductService productService) {
-            return new TxProbe(productService);
+        TxProbe txProbe(CurrencyService currencyService) {
+            return new TxProbe(currencyService);
         }
     }
 
     @Nested
     class TxProbe {
-        private final ProductService productService;
+        private final CurrencyService currencyService;
         @PersistenceContext EntityManager em;
 
-        TxProbe(ProductService productService) {
-            this.productService = productService;
+        TxProbe(CurrencyService currencyService) {
+            this.currencyService = currencyService;
         }
 
         @Transactional
-        public void saveTwoAndFail(ProductDTO a, ProductDTO b) {
-            productService.save(a);
-            productService.save(b);
+        public void saveTwoAndFail(CurrencyDTO a, CurrencyDTO b) {
+            currencyService.save(a);
+            currencyService.save(b);
             em.flush();
             throw new RuntimeException("boom");
         }
 
         @BeforeEach
         void clean() {
-            productRepository.deleteAll();
+            currencyRepository.deleteAll();
         }
 
         @Test
         void save_and_getByName_works_endToEnd() {
-            productService.save(dto("apple", new BigDecimal(10), new BigDecimal(2), "green"));
-            Product p = productService.getByName("apple");
+            currencyService.save(dto("apple", new BigDecimal(10), new BigDecimal(2), "green"));
+            Currency p = currencyService.getByName("apple");
             assertThat(p.getName()).isEqualTo("apple");
             assertThat(p.getPrice()).isEqualTo(BigDecimal.valueOf(10));
             assertThat(p.getQty()).isEqualTo(BigDecimal.valueOf(2));
