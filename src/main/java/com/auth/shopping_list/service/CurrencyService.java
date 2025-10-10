@@ -1,5 +1,6 @@
 package com.auth.shopping_list.service;
 
+import com.auth.shopping_list.client.RateClient;
 import com.auth.shopping_list.dto.CurrencyDTO;
 import com.auth.shopping_list.entity.Currency;
 import com.auth.shopping_list.exception.CurrencyNotFoundException;
@@ -7,11 +8,13 @@ import com.auth.shopping_list.mapper.CurrencyMapper;
 import com.auth.shopping_list.repository.CurrencyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
@@ -21,11 +24,13 @@ import java.util.Optional;
 public class CurrencyService {
     private final CurrencyRepository currencyRepository;
     private final CurrencyMapper currencyMapper;
+    private final CurrencyRateService currencyRateService;
 
     public Currency save(CurrencyDTO currencyDTO) {
         log.info("Сохранение валюты: {}", currencyDTO.toString());
-        Currency product = currencyMapper.productEntity(currencyDTO);
-        Currency savedProduct = currencyRepository.saveAndFlush(product);
+        Currency currency = currencyMapper.productEntity(currencyDTO);
+        currency.setPrice(currencyRateService.getRate(currency.getName()));
+        Currency savedProduct = currencyRepository.saveAndFlush(currency);
         log.info("Валюта сохранена: {}", savedProduct.toString());
         return savedProduct;
     }
@@ -53,12 +58,11 @@ public class CurrencyService {
 
     public Currency update (CurrencyDTO currencyDTO) {
         log.info("Изменение валюты: {}", currencyDTO.getName());
-        Currency product = getByName(currencyDTO.getName());
-        product.setName(currencyDTO.getName());
-        product.setQty(currencyDTO.getQty());
-        product.setPrice(currencyDTO.getPrice());
-        product.setDescription(currencyDTO.getDescription());
-        Currency save = currencyRepository.save(product);
+        Currency currency = getByName(currencyDTO.getName());
+        currency.setName(currencyDTO.getName());
+        currency.setQty(currencyDTO.getQty());
+        currency.setDescription(currencyDTO.getDescription());
+        Currency save = currencyRepository.save(currency);
         log.info("Валюта обновлена: {}", save.toString());
         return save;
     }
@@ -77,5 +81,9 @@ public class CurrencyService {
         Currency save = currencyRepository.save(currency);
         log.info("Добавлен комментарий: {}", save.toString());
         return save;
+    }
+
+    public BigDecimal getRate (String currency){
+        return currencyRateService.getRate(currency);
     }
 }
