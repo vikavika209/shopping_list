@@ -150,7 +150,4 @@ class CurrencyServiceTest {
         verify(currencyRepository).save(currency);
         assertThat(withComment.getDescription().equals("New comment"));
     }
-
-
-
 }

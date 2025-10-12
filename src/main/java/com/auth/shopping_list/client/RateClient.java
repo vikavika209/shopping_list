@@ -1,6 +1,7 @@
 package com.auth.shopping_list.client;
 
 import com.auth.shopping_list.exception.NoThisRateException;
+import com.auth.shopping_list.service.RateRefreshScheduler;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

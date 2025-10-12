@@ -1,6 +1,5 @@
 package com.auth.shopping_list.service;
 
-import com.auth.shopping_list.client.RateClient;
 import com.auth.shopping_list.dto.CurrencyDTO;
 import com.auth.shopping_list.entity.Currency;
 import com.auth.shopping_list.exception.CurrencyNotFoundException;
@@ -8,7 +7,6 @@ import com.auth.shopping_list.mapper.CurrencyMapper;
 import com.auth.shopping_list.repository.CurrencyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -84,6 +82,8 @@ public class CurrencyService {
     }
 
     public BigDecimal getRate (String currency){
+        log.info("Получение курса для {}", currency);
         return currencyRateService.getRate(currency);
     }
+
 }
