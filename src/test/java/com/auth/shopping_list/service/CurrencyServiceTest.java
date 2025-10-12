@@ -29,23 +29,23 @@ class CurrencyServiceTest {
     CurrencyRepository currencyRepository;
     @Mock
     CurrencyMapper currencyMapper;
+    @Mock
+    CurrencyRateService currencyRateService;
 
     @InjectMocks
     CurrencyService currencyService;
 
-    private CurrencyDTO dto(String name, BigDecimal price, BigDecimal qty, String desc) {
+    private CurrencyDTO dto(String name, BigDecimal qty, String desc) {
         CurrencyDTO d = new CurrencyDTO();
         d.setName(name);
-        d.setPrice(price);
         d.setQty(qty);
         d.setDescription(desc);
         return d;
     }
 
-    private Currency entity(String name, BigDecimal price, BigDecimal qty, String desc) {
+    private Currency entity(String name, BigDecimal qty, String desc) {
         Currency p = new Currency();
         p.setName(name);
-        p.setPrice(price);
         p.setQty(qty);
         p.setDescription(desc);
         return p;
@@ -53,16 +53,17 @@ class CurrencyServiceTest {
 
     @Test
     void save_mapsAndPersists() {
-        CurrencyDTO dto = dto("apple", new BigDecimal(10), new BigDecimal(2), "green");
-        Currency mapped = entity("apple", new BigDecimal(10), new BigDecimal(2), "green");
-        Currency saved  = entity("apple", new BigDecimal(10), new BigDecimal(2), "green");
+        CurrencyDTO dto = dto("EUR", new BigDecimal(10), "some description");
+        Currency mapped = entity("EUR", new BigDecimal(10), "some description");
 
         when(currencyMapper.productEntity(dto)).thenReturn(mapped);
-        when(currencyRepository.saveAndFlush(mapped)).thenReturn(saved);
+        when(currencyRateService.getRate("EUR")).thenReturn(new BigDecimal(100));
+        when(currencyRepository.saveAndFlush(mapped)).thenReturn(mapped);
 
         Currency result = currencyService.save(dto);
 
-        assertThat(result.getName()).isEqualTo("apple");
+        assertThat(result.getName()).isEqualTo("EUR");
+        assertThat(result.getPrice()).isEqualTo(BigDecimal.valueOf(100));
         verify(currencyMapper).productEntity(dto);
         verify(currencyRepository).saveAndFlush(mapped);
         verifyNoMoreInteractions(currencyMapper, currencyRepository);
@@ -71,7 +72,7 @@ class CurrencyServiceTest {
     @Test
     void getAll_delegatesToRepo() {
         Pageable pageable = PageRequest.of(0, 2);
-        List<Currency> list = List.of(entity("a",new BigDecimal(1),new BigDecimal(1),"No comment"), entity("b",new BigDecimal(2),new BigDecimal(1),"No comment"));
+        List<Currency> list = List.of(entity("a",new BigDecimal(1),"No comment"), entity("b",new BigDecimal(2),"No comment"));
         Page<Currency> page = new PageImpl<>(list, pageable, list.size());
 
         when(currencyRepository.findAll(pageable)).thenReturn(page);
@@ -84,13 +85,13 @@ class CurrencyServiceTest {
 
     @Test
     void getByName_returns_whenFound() {
-        Currency p = entity("book", new BigDecimal(5), new BigDecimal(1), "");
-        when(currencyRepository.findProductByName("book")).thenReturn(Optional.of(p));
+        Currency eur = entity("EUR", new BigDecimal(5), "");
+        when(currencyRepository.findProductByName("EUR")).thenReturn(Optional.of(eur));
 
-        Currency found = currencyService.getByName("book");
+        Currency found = currencyService.getByName("EUR");
 
-        assertThat(found).isSameAs(p);
-        verify(currencyRepository).findProductByName("book");
+        assertThat(found).isSameAs(eur);
+        verify(currencyRepository).findProductByName("EUR");
     }
 
     @Test
@@ -104,29 +105,31 @@ class CurrencyServiceTest {
 
     @Test
     void update_copiesFields_andSaves() {
-        Currency existing = entity("pen", new BigDecimal(1), new BigDecimal(1), "old");
-        when(currencyRepository.findProductByName("pen")).thenReturn(Optional.of(existing));
+        Currency existing = entity("EUR", new BigDecimal(1), "old");
+        existing.setPrice(BigDecimal.valueOf(100));
+
+        when(currencyRepository.findProductByName("EUR")).thenReturn(Optional.of(existing));
         when(currencyRepository.save(existing)).thenReturn(existing);
 
-        CurrencyDTO dto = dto("pen", new BigDecimal(2), new BigDecimal(3), "new");
+        CurrencyDTO dto = dto("EUR", new BigDecimal(2), "new");
         Currency saved = currencyService.update(dto);
 
-        assertThat(saved.getPrice()).isEqualTo(BigDecimal.valueOf(2));
-        assertThat(saved.getQty()).isEqualTo(BigDecimal.valueOf(3));
+        assertThat(saved.getPrice()).isEqualTo(BigDecimal.valueOf(100));
+        assertThat(saved.getQty()).isEqualTo(BigDecimal.valueOf(2));
         assertThat(saved.getDescription()).isEqualTo("new");
 
-        verify(currencyRepository).findProductByName("pen");
+        verify(currencyRepository).findProductByName("EUR");
         verify(currencyRepository).save(existing);
     }
 
     @Test
     void delete_findsThenDeletes() {
-        Currency p = entity("milk", new BigDecimal(1), new BigDecimal(1), "");
-        when(currencyRepository.findProductByName("milk")).thenReturn(Optional.of(p));
+        Currency p = entity("USD", new BigDecimal(1), "");
+        when(currencyRepository.findProductByName("USD")).thenReturn(Optional.of(p));
 
-        currencyService.delete("milk");
+        currencyService.delete("USD");
 
-        verify(currencyRepository).findProductByName("milk");
+        verify(currencyRepository).findProductByName("USD");
         verify(currencyRepository).delete(p);
     }
 
@@ -147,7 +150,4 @@ class CurrencyServiceTest {
         verify(currencyRepository).save(currency);
         assertThat(withComment.getDescription().equals("New comment"));
     }
-
-
-
 }

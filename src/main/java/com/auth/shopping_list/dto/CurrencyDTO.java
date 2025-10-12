@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class CurrencyDTO {
     private String name;
-    private BigDecimal price;
     private BigDecimal qty;
     private String description;
 }

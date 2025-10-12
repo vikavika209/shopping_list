@@ -15,6 +15,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -32,34 +33,20 @@ public class CurrencyServiceTransactionTest {
     @Autowired
     CurrencyRepository currencyRepository;
 
-    @Autowired
-    TxProbe txProbe;
-
-    private static CurrencyDTO dto(String name, BigDecimal price, BigDecimal qty, String desc) {
+    private static CurrencyDTO dto(String name, BigDecimal qty, String desc) {
         CurrencyDTO d = new CurrencyDTO();
         d.setName(name);
-        d.setPrice(price);
         d.setQty(qty);
         d.setDescription(desc);
         return d;
     }
 
-    @TestConfiguration
-    class TestBeans {
-        @Bean
-        TxProbe txProbe(CurrencyService currencyService) {
-            return new TxProbe(currencyService);
-        }
-    }
-
     @Nested
     class TxProbe {
-        private final CurrencyService currencyService;
-        @PersistenceContext EntityManager em;
+        @Autowired
+        CurrencyService currencyService;
 
-        TxProbe(CurrencyService currencyService) {
-            this.currencyService = currencyService;
-        }
+        @PersistenceContext EntityManager em;
 
         @Transactional
         public void saveTwoAndFail(CurrencyDTO a, CurrencyDTO b) {
@@ -76,11 +63,13 @@ public class CurrencyServiceTransactionTest {
 
         @Test
         void save_and_getByName_works_endToEnd() {
-            currencyService.save(dto("apple", new BigDecimal(10), new BigDecimal(2), "green"));
-            Currency p = currencyService.getByName("apple");
-            assertThat(p.getName()).isEqualTo("apple");
-            assertThat(p.getPrice()).isEqualTo(BigDecimal.valueOf(10));
-            assertThat(p.getQty()).isEqualTo(BigDecimal.valueOf(2));
+            currencyService.save(dto("EUR", new BigDecimal(10), "eur_comment"));
+            Currency p = currencyService.getByName("EUR");
+            BigDecimal rate = currencyService.getRate("EUR").setScale(2, RoundingMode.HALF_UP);
+
+            assertThat(p.getName()).isEqualTo("EUR");
+            assertThat(p.getPrice()).isEqualTo(rate);
+            assertThat(p.getQty()).isEqualTo(BigDecimal.valueOf(10).setScale(2, RoundingMode.HALF_UP));
         }
     }
 }

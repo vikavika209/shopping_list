@@ -50,4 +50,10 @@ public class Currency {
         this.qty = qty != null ? qty : BigDecimal.ONE;
         calculateTotalPrice();
     }
+
+    public Currency(String name, BigDecimal qty, String description) {
+        this.name = name;
+        this.qty = qty;
+        this.description = description;
+    }
 }
